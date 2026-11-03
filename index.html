@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KosCheck - Asisten Survei & Verifikasi Fisik Kos On-Demand</title>
+  <meta name="description" content="Platform verifikasi fisik kos independen untuk mahasiswa rantau. Bersih, transparan, dan bebas penipuan.">
+
+  <!-- Typography: Inter & JetBrains Mono (High-Taste Typography, Anti-Generic) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Segoe UI"', 'Roboto', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              black: '#000000',
+              navy: '#12223c',
+              amber: '#f59e0b',
+              gray100: '#f4f4f4',
+              gray200: '#e5e5e5',
+              gray400: '#767676',
+              gray700: '#333333',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* High-Taste Editorial Typography & Japanese Functional Minimalism */
+    body {
+      background-color: #ffffff;
+      color: #111111;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+      letter-spacing: -0.011em;
+    }
+
+    ::selection {
+      background: #111111;
+      color: #ffffff;
+    }
+
+    .border-b-active {
+      position: relative;
+    }
+    .border-b-active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #000000;
+    }
+
+    /* Smooth Scroll Reveal Animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.12s; }
+    .reveal-delay-2 { transition-delay: 0.24s; }
+    .reveal-delay-3 { transition-delay: 0.36s; }
+
+    /* Mobile Drawer Transition */
+    #mobileDrawer {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #mobileBackdrop {
+      transition: opacity 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-white text-black antialiased">
+
+  <!-- Top Announcement Bar (Uniqlo Style) -->
+  <div class="bg-black text-white text-xs py-2 px-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="bg-white text-black font-extrabold text-[10px] px-1.5 py-0.5 uppercase tracking-wider">PENTING</span>
+        <span class="text-slate-200 text-[11px] sm:text-xs">Musim Maba 2026/2027: Jangan transfer uang muka kos tanpa verifikasi fisik tatap muka.</span>
+      </div>
+      <div class="hidden md:flex items-center gap-6 text-[11px] text-slate-300">
+        <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i> Garansi 100% Anti-Catfishing</span>
+        <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i> Laporan Selesai 24 Jam</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header (Spacious, Clean & Uncluttered) -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-20 gap-4">
+        
+        <!-- Left: Brand Logo & Streamlined Segment Tabs -->
+        <div class="flex items-center gap-6 lg:gap-8 shrink-0">
+          <a href="#" class="flex items-center gap-2.5">
+            <img src="koscheck-logo.png" alt="KosCheck Logo" class="h-10 w-auto object-contain">
+            <div class="flex flex-col">
+              <span class="text-2xl font-black tracking-tight text-black leading-none">Kos<span class="text-amber-500">Check</span></span>
+              <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Auditor Kos Mahasiswa</span>
+            </div>
+          </a>
+
+          <!-- Streamlined Category Tabs (Spacious, No Horizontal Crowding) -->
+          <nav class="hidden md:flex items-center space-x-5 lg:space-x-7 text-xs lg:text-sm font-bold tracking-tight">
+            <a href="cari.html" class="py-6 text-amber-600 hover:text-black transition-colors flex items-center gap-1.5 font-extrabold">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> PETA KOS
+            </a>
+            <a href="#layanan" class="py-6 border-b-active text-black">LAYANAN</a>
+            <a href="#standar-audit" class="py-6 text-gray-500 hover:text-black transition-colors">SOP 4 PILAR</a>
+            <a href="#kalkulator" class="py-6 text-gray-500 hover:text-black transition-colors">HEMAT BIAYA</a>
+            <a href="#faq" class="py-6 text-gray-500 hover:text-black transition-colors">BANTUAN</a>
+          </nav>
+        </div>
+
+        <!-- Right: Search Bar & Primary CTA (Sampel Laporan Removed for Breathing Space) -->
+        <div class="flex items-center gap-3 shrink-0">
+          
+          <!-- Search Form Directing to cari.html -->
+          <form action="cari.html" method="GET" class="hidden sm:flex items-center relative w-44 md:w-52 lg:w-64">
+            <input type="text" name="q" placeholder="Cari kampus (UNPAM, UI...)" class="w-full bg-gray-100 text-xs text-black placeholder-gray-500 rounded-full py-2.5 pl-4 pr-9 border border-transparent focus:border-black focus:bg-white focus:outline-none transition-all">
+            <button type="submit" aria-label="Cari" class="absolute right-3 text-gray-500 hover:text-black">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i>
+            </button>
+          </form>
+
+          <!-- Single Primary Action Button -->
+          <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20order%20survei%20kos" target="_blank" class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white text-xs font-extrabold hover:bg-gray-800 transition-colors whitespace-nowrap shadow-sm">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>PESAN SURVEI</span>
+          </a>
+
+          <!-- Mobile Hamburger Menu Button -->
+          <button id="openMobileMenuBtn" aria-label="Buka Menu Navigasi" class="md:hidden p-2 text-black hover:bg-gray-100 rounded-lg transition-colors">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- DYNAMIC MOBILE SLIDE-OUT DRAWER (< 768px) -->
+  <div id="mobileMenuContainer" class="fixed inset-0 z-50 pointer-events-none transition-all">
+    <!-- Dark Backdrop -->
+    <div id="mobileBackdrop" class="absolute inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity"></div>
+    
+    <!-- Slide-out Drawer Panel -->
+    <aside id="mobileDrawer" class="absolute top-0 right-0 w-full max-w-xs h-full bg-white shadow-2xl translate-x-full pointer-events-auto flex flex-col justify-between overflow-y-auto">
+      <div>
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <img src="koscheck-logo.png" alt="KosCheck Logo" class="h-8 w-auto">
+            <span class="font-black text-lg text-black">Kos<span class="text-amber-500">Check</span></span>
+          </div>
+          <button id="closeMobileMenuBtn" class="p-2 text-gray-500 hover:text-black rounded-lg">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Mobile Search Input -->
+        <div class="p-4 border-b border-gray-100 bg-gray-50">
+          <form action="cari.html" method="GET" class="relative">
+            <input type="text" name="q" placeholder="Cari kampus (UNPAM, UI, ITB...)" class="w-full bg-white text-xs text-black placeholder-gray-400 rounded-lg py-2.5 pl-9 pr-3 border border-gray-200 focus:border-black outline-none">
+            <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
+          </form>
+        </div>
+
+        <!-- Navigation Links with Icons -->
+        <nav class="p-4 space-y-1">
+          <a href="cari.html" class="mobile-nav-link flex items-center justify-between p-3 rounded-lg text-amber-600 font-extrabold text-sm hover:bg-amber-50">
+            <span class="flex items-center gap-3"><i data-lucide="map-pin" class="w-4 h-4"></i> Peta Interaktif Kos</span>
+            <span class="text-[9px] bg-amber-500 text-black px-2 py-0.5 rounded font-black tracking-wider">BARU</span>
+          </a>
+          <a href="#layanan" class="mobile-nav-link flex items-center gap-3 p-3 rounded-lg text-gray-800 font-bold text-sm hover:bg-gray-100">
+            <i data-lucide="check-circle" class="w-4 h-4 text-gray-500"></i> Pilihan Layanan & Tarif
+          </a>
+          <a href="#standar-audit" class="mobile-nav-link flex items-center gap-3 p-3 rounded-lg text-gray-800 font-bold text-sm hover:bg-gray-100">
+            <i data-lucide="shield-check" class="w-4 h-4 text-gray-500"></i> Standar SOP 4 Pilar
+          </a>
+          <a href="#kalkulator" class="mobile-nav-link flex items-center gap-3 p-3 rounded-lg text-gray-800 font-bold text-sm hover:bg-gray-100">
+            <i data-lucide="calculator" class="w-4 h-4 text-gray-500"></i> Kalkulator Hemat Biaya
+          </a>
+          <a href="#perbandingan" class="mobile-nav-link flex items-center gap-3 p-3 rounded-lg text-gray-800 font-bold text-sm hover:bg-gray-100">
+            <i data-lucide="scale" class="w-4 h-4 text-gray-500"></i> Beda vs Mamikos
+          </a>
+          <button id="mobileSampleReportBtn" class="w-full flex items-center gap-3 p-3 rounded-lg text-gray-800 font-bold text-sm hover:bg-gray-100 text-left">
+            <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i> Contoh Sampel Laporan
+          </button>
+          <a href="#faq" class="mobile-nav-link flex items-center gap-3 p-3 rounded-lg text-gray-800 font-bold text-sm hover:bg-gray-100">
+            <i data-lucide="help-circle" class="w-4 h-4 text-gray-500"></i> Bantuan & FAQ
+          </a>
+        </nav>
+      </div>
+
+      <!-- Bottom Drawer CTA & WhatsApp -->
+      <div class="p-4 border-t border-gray-100 bg-gray-50 space-y-2">
+        <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20order%20survei%20kos" target="_blank" class="w-full inline-flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white font-extrabold text-xs py-3 rounded-lg transition-colors">
+          <i data-lucide="message-square" class="w-4 h-4 text-amber-400"></i> PESAN SURVEI (Rp 35.000)
+        </a>
+        <div class="text-[10px] text-center text-gray-400 font-medium">
+          Dikerjakan oleh surveyor mahasiswa lokal 24 jam
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- FULL-BLEED FULLSCREEN HERO SHOWCASE (Edge-to-Edge 100vw, Full Viewport Height, Generous Breathing Space) -->
+  <section class="relative w-full h-[calc(100vh-5rem)] min-h-[600px] bg-black overflow-hidden border-b border-gray-200">
+    
+    <!-- Edge-to-Edge Background Image (100% Full Width & Height) -->
+    <img src="hero-room.jpg" alt="Verifikasi Fisik Kamar Kos Bersih & Nyaman" class="absolute inset-0 w-full h-full object-cover object-center scale-[1.02] transition-transform duration-1000">
+    
+    <!-- Soft Cinematic Editorial Lighting (Smooth, Natural, High-Contrast Text Legibility) -->
+    <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20"></div>
+
+    <!-- Hero Content Aligned with Max-W Container -->
+    <div class="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-between py-10 lg:py-14 text-white">
+      
+      <!-- Top Row: Subtle 4 Pilar Indicators (Badge 'Auditor Kos Mahasiswa Independen' Removed) -->
+      <div class="flex items-center justify-end w-full">
+        <!-- Sleek Frosted Glass Status Indicator -->
+        <div class="hidden md:flex items-center gap-3 bg-black/40 backdrop-blur-md border border-white/15 px-4 py-2 rounded-full text-xs text-white/90">
+          <span class="text-[10px] font-mono uppercase text-amber-400 font-bold">STANDAR 4 PILAR:</span>
+          <span class="flex items-center gap-1 font-medium"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Air Uji 10m</span>
+          <span class="text-white/25">&bull;</span>
+          <span class="flex items-center gap-1 font-medium"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> 4G Speedtest</span>
+          <span class="text-white/25">&bull;</span>
+          <span class="flex items-center gap-1 font-medium"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> KTP Legal</span>
+        </div>
+      </div>
+
+      <!-- Main Headline & Actions (Generous Breathing Room, Uncluttered) -->
+      <div class="max-w-2xl reveal my-auto">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12] mb-5">
+          Sewa Kos di Kota Rantau<br class="hidden sm:inline"> Tanpa Cemas & Tertipu.
+        </h1>
+
+        <p class="text-sm sm:text-base text-gray-200 font-normal leading-relaxed mb-8 max-w-xl">
+          Survei fisik langsung oleh mahasiswa lokal independen. Kami uji kejernihan air, speedtest 4G di kamar tertutup, rekaman video 60fps tanpa manipulasi, dan validasi KTP pemilik sah.
+        </p>
+
+        <!-- Clean, Balanced Action Controls (Max 2 Buttons, No Clutter) -->
+        <div class="flex flex-wrap items-center gap-3.5">
+          <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20order%20survei%20kos" target="_blank" class="inline-flex items-center gap-2 bg-white text-black font-extrabold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
+            <i data-lucide="send" class="w-4 h-4 text-black"></i>
+            <span>Titip Survei</span>
+            <span class="text-[11px] font-black text-amber-900 bg-amber-300 px-2 py-0.5 rounded-full ml-1">Rp 35k</span>
+          </a>
+
+          <a href="cari.html" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/25 font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-full transition-all">
+            <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
+            <span>Peta Interaktif Kos</span>
+          </a>
+        </div>
+
+        <!-- Subtle Text Link for Sample Report -->
+        <div class="mt-4 pt-1">
+          <button onclick="toggleModal('sampleModal', true)" class="inline-flex items-center gap-1.5 text-xs text-gray-300 hover:text-white underline decoration-white/30 hover:decoration-white transition-colors">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            Lihat format laporan verifikasi fisik resmi &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Hint (Clean, Subdued, Solid Status Indicator) -->
+      <div class="flex items-center justify-between text-xs text-white/60 pt-4 border-t border-white/10">
+        <div class="flex items-center gap-2 text-[11px] font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Surveyor aktif siap survei di Pamulang (UNPAM), Depok (UI), & Bandung (ITB)</span>
+        </div>
+        <a href="#layanan" class="hidden sm:flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-white/80 hover:text-white transition-colors">
+          <span>Scroll ke Layanan</span>
+          <i data-lucide="arrow-down" class="w-3 h-3"></i>
+        </a>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- Quick Category Strip -->
+  <nav aria-label="Shortcut Kategori" class="border-b border-gray-200 bg-gray-50 py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between overflow-x-auto gap-4 text-xs font-bold uppercase tracking-wider text-gray-700">
+        <a href="cari.html" class="flex items-center gap-2 shrink-0 px-3.5 py-1.5 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
+          <i data-lucide="map" class="w-4 h-4 text-amber-400"></i> Buka Peta Kos
+        </a>
+        <a href="#layanan" class="flex items-center gap-2 shrink-0 px-3 py-1.5 hover:text-black">
+          <i data-lucide="check-circle" class="w-4 h-4 text-black"></i> Check My Kos (Rp 35k)
+        </a>
+        <a href="#layanan" class="flex items-center gap-2 shrink-0 px-3 py-1.5 hover:text-black">
+          <i data-lucide="compass" class="w-4 h-4 text-black"></i> Find My Kos (Rp 75k)
+        </a>
+        <a href="#standar-audit" class="flex items-center gap-2 shrink-0 px-3 py-1.5 hover:text-black">
+          <i data-lucide="droplet" class="w-4 h-4 text-blue-600"></i> Uji Air 10 Menit
+        </a>
+        <a href="#standar-audit" class="flex items-center gap-2 shrink-0 px-3 py-1.5 hover:text-black">
+          <i data-lucide="signal" class="w-4 h-4 text-emerald-600"></i> Speedtest 4 Operator
+        </a>
+        <a href="#standar-audit" class="flex items-center gap-2 shrink-0 px-3 py-1.5 hover:text-black">
+          <i data-lucide="video" class="w-4 h-4 text-amber-600"></i> Video 60fps No-Cut
+        </a>
+        <a href="#standar-audit" class="flex items-center gap-2 shrink-0 px-3 py-1.5 hover:text-black">
+          <i data-lucide="shield-check" class="w-4 h-4 text-purple-600"></i> Validasi KTP & Scam
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Section: Masalah vs Solusi (Clean Editorial Layout) -->
+  <section class="py-16 md:py-20 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between pb-8 border-b border-gray-200 gap-4 mb-10 reveal">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-gray-400">FAKTA LAPANGAN</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-black mt-1">
+            Kenapa Mahasiswa Rantau Membutuhkan KosCheck?
+          </h2>
+        </div>
+        <p class="text-xs text-gray-600 max-w-md">
+          Portal iklan online dibayar oleh pemilik kos, sehingga kekurangan fasilitas sering disembunyikan. KosCheck dibayar olehmu untuk mengungkap fakta riil apa adanya.
+        </p>
+      </div>
+
+      <!-- 3 Editorial Clean Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <div class="border border-gray-200 p-8 space-y-4 hover:border-black transition-colors reveal reveal-delay-1">
+          <div class="text-xs font-mono font-bold text-gray-400 uppercase">01 / VISUALISASI</div>
+          <h3 class="text-lg font-extrabold text-black">Manipulasi Foto Ultra-Wide</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Kamar sempit 2x3 meter tampak lega di foto iklan karena efek lensa lebar. Surveyor kami merekam video kontinu 60fps dengan sudut pandang mata normal dari gerbang hingga kamar mandi.
+          </p>
+          <div class="text-xs font-bold text-black pt-2 flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Solusi: Video 60fps Tanpa Jeda
+          </div>
+        </div>
+
+        <div class="border border-gray-200 p-8 space-y-4 hover:border-black transition-colors reveal reveal-delay-2">
+          <div class="text-xs font-mono font-bold text-gray-400 uppercase">02 / SANITASI & SINYAL</div>
+          <h3 class="text-lg font-extrabold text-black">Fasilitas Fiktif & Rusak</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Banyak kamar kos memiliki air tanah keruh berbau besi atau berada di area blind spot sinyal HP. Kami menampung air selama 10 menit dan menguji kecepatan internet 4 operator di pintu tertutup.
+          </p>
+          <div class="text-xs font-bold text-black pt-2 flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Solusi: Pengujian Empiris 4 Pilar
+          </div>
+        </div>
+
+        <div class="border border-gray-200 p-8 space-y-4 hover:border-black transition-colors reveal reveal-delay-3">
+          <div class="text-xs font-mono font-bold text-gray-400 uppercase">03 / TRANSAKSI</div>
+          <h3 class="text-lg font-extrabold text-black">Penipuan Uang Muka (DP)</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Makelar gadungan sering mencuri foto kos dan mendesak calon penyewa mentransfer DP ke rekening palsu. Surveyor kami wajib bertemu pengelola sah dan mencocokkan KTP dengan nomor rekening sewa.
+          </p>
+          <div class="text-xs font-bold text-black pt-2 flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Solusi: Garansi Anti-Scam Tatap Muka
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Paket Layanan -->
+  <section id="layanan" class="py-16 md:py-20 bg-gray-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      
+      <div class="text-center max-w-xl mx-auto mb-14 space-y-2 reveal">
+        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">PILIHAN LAYANAN</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-black">
+          Tarif Pasti, Murah & Transparan
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-600">
+          Biaya flat tanpa pungutan liar. Dikelola oleh surveyor mahasiswa lokal independen.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Product Card 1: Check My Kos (Top Pick) -->
+        <div class="bg-white border-2 border-black p-8 flex flex-col justify-between relative shadow-sm reveal reveal-delay-1">
+          <div class="absolute -top-3 left-6 bg-black text-white text-[10px] font-black uppercase px-3 py-1 tracking-widest">
+            PALING POPULER
+          </div>
+
+          <div>
+            <h3 class="text-xl font-black text-black">Check My Kos</h3>
+            <p class="text-xs text-gray-500 mt-1">Audit 1 kos spesifik yang sudah kamu incar</p>
+
+            <div class="my-6 pb-6 border-b border-gray-100">
+              <div class="text-4xl font-black text-black tracking-tight">Rp 35.000</div>
+              <span class="text-[11px] font-semibold text-gray-500 uppercase">/ Satu Lokasi Kos</span>
+            </div>
+
+            <ul class="space-y-3 text-xs text-gray-700 font-medium">
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Audit fisik 4 pilar lengkap</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Video 60fps tanpa jeda (one-take)</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Speedtest 4 operator seluler di kamar tertutup</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Uji kejernihan & endapan air 10 menit</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Cek KTP & validasi rekening pengelola asli</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="pt-8">
+            <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20pesan%20paket%20Check%20My%20Kos%20(Rp%2035k)" target="_blank" class="w-full inline-flex justify-center items-center py-3.5 bg-black text-white text-xs font-black uppercase tracking-wider hover:bg-gray-800 transition-colors">
+              PILIH PAKET INI
+            </a>
+          </div>
+        </div>
+
+        <!-- Product Card 2: Find My Kos -->
+        <div class="bg-white border border-gray-200 p-8 flex flex-col justify-between hover:border-black transition-colors reveal reveal-delay-2">
+          <div>
+            <h3 class="text-xl font-black text-black">Find My Kos</h3>
+            <p class="text-xs text-gray-500 mt-1">Pencarian & kurasi 3 rekomendasi terbaik</p>
+
+            <div class="my-6 pb-6 border-b border-gray-100">
+              <div class="text-4xl font-black text-black tracking-tight">Rp 75.000</div>
+              <span class="text-[11px] font-semibold text-gray-500 uppercase">/ Kurasi 3 Pilihan Kamar</span>
+            </div>
+
+            <ul class="space-y-3 text-xs text-gray-700 font-medium">
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Semua fasilitas paket Check My Kos</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Pencarian 3 kos sesuai bujet & kriteria</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Tabel komparasi matriks 3 unit kos</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Panduan rute jalan kaki / angkot ke kampus</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="pt-8">
+            <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20pesan%20paket%20Find%20My%20Kos%20(Rp%2075k)" target="_blank" class="w-full inline-flex justify-center items-center py-3.5 bg-gray-100 text-black border border-gray-300 text-xs font-black uppercase tracking-wider hover:bg-black hover:text-white transition-colors">
+              PILIH PAKET INI
+            </a>
+          </div>
+        </div>
+
+        <!-- Product Card 3: B2B Verified Badge -->
+        <div class="bg-white border border-gray-200 p-8 flex flex-col justify-between hover:border-black transition-colors reveal reveal-delay-3">
+          <div>
+            <h3 class="text-xl font-black text-black">B2B Verified Badge</h3>
+            <p class="text-xs text-gray-500 mt-1">Audit sertifikasi tahunan pemilik properti</p>
+
+            <div class="my-6 pb-6 border-b border-gray-100">
+              <div class="text-4xl font-black text-black tracking-tight">Rp 50.000</div>
+              <span class="text-[11px] font-semibold text-gray-500 uppercase">/ Sertifikasi Tahunan</span>
+            </div>
+
+            <ul class="space-y-3 text-xs text-gray-700 font-medium">
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Audit kelayakan 4 pilar standar KosCheck</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Sertifikat Digital Verified KosCheck</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Stiker QR Code fisik di gerbang kos</span>
+              </li>
+              <li class="flex items-center gap-2.5">
+                <i data-lucide="check" class="w-4 h-4 text-black shrink-0"></i>
+                <span>Prioritas rekomendasi ke mahasiswa</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="pt-8">
+            <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20pemilik%20kos%20mau%20daftar%20B2B" target="_blank" class="w-full inline-flex justify-center items-center py-3.5 bg-gray-100 text-black border border-gray-300 text-xs font-black uppercase tracking-wider hover:bg-black hover:text-white transition-colors">
+              DAFTARKAN KOS
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: SOP 4 Pilar Audit -->
+  <section id="standar-audit" class="py-16 md:py-20 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between pb-8 border-b border-gray-200 gap-4 mb-10 reveal">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-gray-400">METODOLOGI AUDITOR</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-black mt-1">
+            4 Pilar Standar Pengujian Fisik
+          </h2>
+        </div>
+        <p class="text-xs text-gray-600 max-w-md">
+          Bukan sekadar foto selfie amatir. Seluruh pengujian dilakukan dengan instrumen dan checklist baku 28 parameter kelayakan.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <div class="border border-gray-200 p-6 space-y-3 reveal reveal-delay-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold text-gray-400">01 / AIR</span>
+            <i data-lucide="droplet" class="w-5 h-5 text-blue-600"></i>
+          </div>
+          <h3 class="text-base font-extrabold text-black">Uji Kualitas Air</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Sampel air keran ditampung 10 menit untuk mendeteksi endapan pasir, karat besi, bau pipa, dan kestabilan debit pompa air.
+          </p>
+        </div>
+
+        <div class="border border-gray-200 p-6 space-y-3 reveal reveal-delay-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold text-gray-400">02 / SINYAL</span>
+            <i data-lucide="signal" class="w-5 h-5 text-emerald-600"></i>
+          </div>
+          <h3 class="text-base font-extrabold text-black">Speedtest 4 Operator</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Pengujian kecepatan Telkomsel, Indosat, XL, dan Smartfren di posisi meja belajar dengan pintu kamar tertutup rapat.
+          </p>
+        </div>
+
+        <div class="border border-gray-200 p-6 space-y-3 reveal reveal-delay-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold text-gray-400">03 / DIMENSI</span>
+            <i data-lucide="video" class="w-5 h-5 text-amber-600"></i>
+          </div>
+          <h3 class="text-base font-extrabold text-black">Video One-Take 60fps</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Perekaman video berkesinambungan tanpa potongan sudut pandang normal (anti ultra-wide) plus pengukuran meteran riil.
+          </p>
+        </div>
+
+        <div class="border border-gray-200 p-6 space-y-3 reveal reveal-delay-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold text-gray-400">04 / LEGALITAS</span>
+            <i data-lucide="shield-check" class="w-5 h-5 text-purple-600"></i>
+          </div>
+          <h3 class="text-base font-extrabold text-black">Validasi KTP Pemilik</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Tatap muka langsung dengan pengelola untuk memastikan nama pemilik sah cocok dengan rekening tujuan transfer sewa.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Kalkulator Penghematan Biaya -->
+  <section id="kalkulator" class="py-16 md:py-20 bg-gray-50 border-b border-gray-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      
+      <div class="text-center max-w-xl mx-auto mb-10 space-y-2 reveal">
+        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">SIMULASI FINANSIAL</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-black">
+          Berapa Uang yang Berhasil Kamu Hemat?
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-600">
+          Bandingkan biaya survei mandiri dari kampung halaman vs menggunakan jasa auditor KosCheck.
+        </p>
+      </div>
+
+      <div class="bg-white border border-gray-200 p-6 sm:p-10 shadow-sm reveal reveal-delay-1">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          
+          <!-- Controls -->
+          <div class="space-y-5">
+            <div>
+              <label for="originSelect" class="block text-xs font-extrabold text-black uppercase tracking-wider mb-2">Asal Domisili</label>
+              <select id="originSelect" onchange="calcSavings()" class="w-full bg-gray-50 text-black rounded-none px-4 py-3 border border-gray-300 text-xs font-bold focus:outline-none focus:border-black">
+                <option value="luar_jawa" selected>Luar Pulau Jawa (Sumatera, Kalimantan, Sulawesi, dll)</option>
+                <option value="jawa_tengah">Jawa Tengah / Jawa Timur</option>
+                <option value="jawa_barat">Jawa Barat Luar Bodetabek</option>
+                <option value="bodetabek">Bodetabek Dekat</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center text-xs font-extrabold text-black uppercase tracking-wider mb-2">
+                <span>Jumlah Kos yang Ingin Dicek</span>
+                <span id="targetBadge" class="font-mono bg-black text-white px-2 py-0.5 text-[11px]">1 Kos</span>
+              </div>
+              <input type="range" id="targetCount" min="1" max="5" value="1" oninput="calcSavings()" class="w-full accent-black cursor-pointer">
+            </div>
+
+            <div class="text-xs text-gray-500 space-y-1 pt-2 border-t border-gray-100">
+              <div class="flex justify-between"><span>Estimasi Tiket Perjalanan:</span> <strong id="lblTicket" class="text-black font-mono">Rp 1.400.000</strong></div>
+              <div class="flex justify-between"><span>Estimasi Hotel & Makan:</span> <strong id="lblHotel" class="text-black font-mono">Rp 450.000</strong></div>
+            </div>
+          </div>
+
+          <!-- Result -->
+          <div class="bg-gray-50 border border-gray-200 p-6 text-center space-y-3">
+            <span class="text-xs uppercase font-extrabold text-gray-500 tracking-wider">Total Uang Kamu yang Diselamatkan</span>
+            <div id="lblSavings" class="text-3xl sm:text-4xl font-black text-black tracking-tight">Rp 1.965.000</div>
+            <p class="text-xs text-gray-600">
+              Biaya survei mandiri (<span id="lblManual" class="line-through text-red-600 font-semibold">Rp 2.000.000</span>) vs KosCheck hanya <strong id="lblKoscheck" class="text-black font-mono">Rp 35.000</strong>.
+            </p>
+            <div class="pt-2">
+              <a href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20order%20survei%20kos" target="_blank" class="w-full inline-flex justify-center items-center py-3 bg-black text-white text-xs font-extrabold uppercase tracking-wider hover:bg-gray-800 transition-colors">
+                AMANKAN BIAYA SEKARANG &rarr;
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Komparasi vs Mamikos -->
+  <section id="perbandingan" class="py-16 md:py-20 bg-white border-b border-gray-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      
+      <div class="text-center max-w-xl mx-auto mb-10 space-y-2 reveal">
+        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">PERBANDINGAN NILAI</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-black">
+          Beda KosCheck vs Portal Iklan Properti
+        </h2>
+      </div>
+
+      <div class="border border-gray-200 reveal reveal-delay-1 overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-gray-100 border-b border-gray-200 text-black font-extrabold uppercase tracking-wider">
+              <th class="py-4 px-5">Parameter</th>
+              <th class="py-4 px-5 text-gray-600">Portal Iklan (Mamikos)</th>
+              <th class="py-4 px-5 bg-black text-white">KosCheck (Auditor Mandiri)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 text-gray-700">
+            <tr>
+              <td class="py-4 px-5 font-bold text-black">Format Visual</td>
+              <td class="py-4 px-5 text-gray-500">Foto statis (sering efek wide)</td>
+              <td class="py-4 px-5 bg-gray-50 font-bold text-black">Video One-Take 60fps murni</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-5 font-bold text-black">Uji Sanitasi Air</td>
+              <td class="py-4 px-5 text-gray-500">Tidak ada pengujian</td>
+              <td class="py-4 px-5 bg-gray-50 font-bold text-black">Uji endapan 10 menit</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-5 font-bold text-black">Uji Sinyal Internet</td>
+              <td class="py-4 px-5 text-gray-500">Hanya klaim tertulis</td>
+              <td class="py-4 px-5 bg-gray-50 font-bold text-black">Speedtest 4 operator tertutup</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-5 font-bold text-black">Keamanan Anti-Scam</td>
+              <td class="py-4 px-5 text-gray-500">Aman transaksi, rentan kondisi fisik</td>
+              <td class="py-4 px-5 bg-gray-50 font-bold text-emerald-700">Validasi fisik KTP pemilik sah</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-5 font-bold text-black">Biaya Layanan</td>
+              <td class="py-4 px-5 text-gray-500">Gratis (survei sendiri mahal)</td>
+              <td class="py-4 px-5 bg-gray-50 font-black text-black">Rp 35.000 flat</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="py-16 md:py-20 bg-gray-50 border-b border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+      
+      <div class="text-center mb-10 space-y-2 reveal">
+        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">BANTUAN & INFORMASI</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-black">
+          Pertanyaan yang Sering Diajukan
+        </h2>
+      </div>
+
+      <div class="space-y-3">
+        
+        <details class="group bg-white border border-gray-200 p-5 [&_summary::-webkit-details-marker]:hidden reveal reveal-delay-1">
+          <summary class="flex items-center justify-between cursor-pointer font-extrabold text-black text-sm">
+            <span>Berapa lama survei selesai setelah dipesan?</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-xs text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+            Maksimal 24 jam setelah pesanan terkonfirmasi. Dalam radius 1-2 km dari kampus utama, laporan seringkali terbit dalam 4-6 jam jika dipesan sebelum jam 12 siang.
+          </p>
+        </details>
+
+        <details class="group bg-white border border-gray-200 p-5 [&_summary::-webkit-details-marker]:hidden reveal reveal-delay-2">
+          <summary class="flex items-center justify-between cursor-pointer font-extrabold text-black text-sm">
+            <span>Bagaimana jika pemilik kos menolak untuk disurvei?</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-xs text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+            Jika pemilik menolak tanpa alasan rasional, kami mendokumentasikan penolakan tersebut dan dana survei kamu dapat dialihkan 100% ke unit kos lain tanpa potongan biaya.
+          </p>
+        </details>
+
+        <details class="group bg-white border border-gray-200 p-5 [&_summary::-webkit-details-marker]:hidden reveal reveal-delay-3">
+          <summary class="flex items-center justify-between cursor-pointer font-extrabold text-black text-sm">
+            <span>Siapa yang bertugas melakukan survei?</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-xs text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+            Surveyor kami adalah mahasiswa tingkat atas yang berdomisili di sekitar kampus tersebut, telah lolos verifikasi identitas (KTP & KTM), dan lulus sertifikasi SOP 4 pilar KosCheck.
+          </p>
+        </details>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Clean Footer -->
+  <footer class="bg-white py-12 text-xs text-gray-600">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      
+      <div class="flex flex-col md:flex-row items-start justify-between pb-8 border-b border-gray-200 gap-8">
+        <div class="space-y-3 max-w-sm">
+          <div class="flex items-center gap-2">
+            <img src="koscheck-logo.png" alt="KosCheck" class="h-8 w-auto object-contain">
+            <span class="text-xl font-black text-black">Kos<span class="text-amber-500">Check</span></span>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed">
+            Platform asisten survei dan verifikasi fisik kos on-demand pertama untuk mahasiswa rantau di Indonesia.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-12 text-xs font-bold uppercase tracking-wider text-black">
+          <div class="space-y-2">
+            <div class="text-gray-400 text-[10px]">LAYANAN</div>
+            <div><a href="#layanan" class="hover:underline">Check My Kos</a></div>
+            <div><a href="#layanan" class="hover:underline">Find My Kos</a></div>
+            <div><a href="#layanan" class="hover:underline">B2B Verified Badge</a></div>
+          </div>
+          <div class="space-y-2">
+            <div class="text-gray-400 text-[10px]">STANDAR AUDIT</div>
+            <div><a href="#standar-audit" class="hover:underline">Sanitasi Air</a></div>
+            <div><a href="#standar-audit" class="hover:underline">Speedtest Sinyal</a></div>
+            <div><a href="#standar-audit" class="hover:underline">Video 60fps</a></div>
+          </div>
+          <div class="space-y-2">
+            <div class="text-gray-400 text-[10px]">KONTAK</div>
+            <div><a href="https://wa.me/6281234567890" target="_blank" class="hover:underline">WhatsApp Admin</a></div>
+            <div><a href="#faq" class="hover:underline">Pusat Bantuan</a></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-gray-400 text-[11px]">
+        <div>&copy; 2026 KosCheck Indonesia &bull; Diinisiasi oleh Kelompok 3 (Digital Entrepreneurship).</div>
+        <div>Prinsip 100% Consumer-First Advocacy.</div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Sample Report Modal -->
+  <div id="sampleModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white max-w-xl w-full max-h-[85vh] overflow-y-auto border border-gray-300 shadow-2xl">
+      
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between bg-black text-white">
+        <div>
+          <span class="text-[10px] font-mono uppercase tracking-widest text-gray-300">DOKUMEN RESMI HASIL AUDIT</span>
+          <h3 class="text-base font-extrabold">Laporan Verifikasi Fisik Kos</h3>
+        </div>
+        <button onclick="toggleModal('sampleModal', false)" class="p-1.5 text-gray-300 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs">
+        
+        <div class="p-4 bg-gray-50 border border-gray-200 flex justify-between items-center">
+          <div>
+            <div class="font-extrabold text-black text-sm">Kost Graha Mahasiswa Mandiri</div>
+            <div class="text-gray-500 mt-0.5">Kamar No. 12 &bull; Auditor: Rizky P. (UNPAM)</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase text-gray-500 font-bold">Skor Total</div>
+            <div class="text-2xl font-black text-black">89 <span class="text-xs font-normal text-gray-500">/ 100</span></div>
+          </div>
+        </div>
+
+        <div class="space-y-2.5">
+          <div class="p-3 border border-gray-200">
+            <div class="font-bold text-black">1. Kualitas Air (Skor: 90/100)</div>
+            <p class="text-gray-600 mt-0.5">Air jernih setelah 10 menit, pompa kencang, tidak berbau besi atau karat.</p>
+          </div>
+
+          <div class="p-3 border border-gray-200">
+            <div class="font-bold text-black">2. Sinyal Seluler (Skor: 85/100)</div>
+            <p class="text-gray-600 mt-0.5">Telkomsel 38 Mbps, Indosat 24 Mbps di dalam kamar tertutup. WiFi kos 15 Mbps.</p>
+          </div>
+
+          <div class="p-3 border border-gray-200">
+            <div class="font-bold text-black">3. Dimensi & Kebisingan (Skor: 92/100)</div>
+            <p class="text-gray-600 mt-0.5">Ukuran riil 3.0m x 3.5m. Kebisingan 44 dB (tenang dan kondusif untuk belajar).</p>
+          </div>
+
+          <div class="p-3 border border-gray-200">
+            <div class="font-bold text-emerald-700">4. Legalitas Pemilik (Valid 100%)</div>
+            <p class="text-gray-600 mt-0.5">Tatap muka langsung dengan Bpk. Bambang. Rekening BCA cocok dengan KTP.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+        <button onclick="toggleModal('sampleModal', false)" class="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-black text-white hover:bg-gray-800">
+          TUTUP
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Interactive JavaScript: Mobile Drawer, Scroll Reveal, Modal & Calculator -->
+  <script>
+    // 1. Init Lucide Icons
+    lucide.createIcons();
+
+    // 2. Mobile Drawer Controller
+    const mobileContainer = document.getElementById('mobileMenuContainer');
+    const mobileBackdrop = document.getElementById('mobileBackdrop');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    const openMenuBtn = document.getElementById('openMobileMenuBtn');
+    const closeMenuBtn = document.getElementById('closeMobileMenuBtn');
+    const mobileSampleBtn = document.getElementById('mobileSampleReportBtn');
+
+    function openMobileMenu() {
+      if (!mobileContainer || !mobileDrawer) return;
+      mobileContainer.classList.remove('pointer-events-none');
+      mobileBackdrop.classList.remove('pointer-events-none', 'opacity-0');
+      mobileBackdrop.classList.add('opacity-100');
+      mobileDrawer.classList.remove('translate-x-full');
+      mobileDrawer.classList.add('translate-x-0');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileMenu() {
+      if (!mobileContainer || !mobileDrawer) return;
+      mobileBackdrop.classList.remove('opacity-100');
+      mobileBackdrop.classList.add('opacity-0');
+      mobileDrawer.classList.remove('translate-x-0');
+      mobileDrawer.classList.add('translate-x-full');
+      setTimeout(() => {
+        mobileContainer.classList.add('pointer-events-none');
+        mobileBackdrop.classList.add('pointer-events-none');
+        document.body.style.overflow = 'auto';
+      }, 300);
+    }
+
+    if (openMenuBtn) openMenuBtn.addEventListener('click', openMobileMenu);
+    if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeMobileMenu);
+    if (mobileBackdrop) mobileBackdrop.addEventListener('click', closeMobileMenu);
+
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', closeMobileMenu);
+    });
+
+    if (mobileSampleBtn) {
+      mobileSampleBtn.addEventListener('click', () => {
+        closeMobileMenu();
+        toggleModal('sampleModal', true);
+      });
+    }
+
+    // 3. Smooth Scroll Reveal (IntersectionObserver)
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.12,
+      rootMargin: '0px 0px -30px 0px'
+    });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // 4. Modal Controller
+    function toggleModal(id, show) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (show) {
+        el.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      } else {
+        el.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    // 5. Savings Calculator
+    function calcSavings() {
+      const origin = document.getElementById('originSelect').value;
+      const count = parseInt(document.getElementById('targetCount').value, 10);
+      document.getElementById('targetBadge').innerText = count + ' Kos';
+
+      let ticket = 0;
+      let hotel = 0;
+
+      if (origin === 'luar_jawa') {
+        ticket = 1400000;
+        hotel = 600000;
+      } else if (origin === 'jawa_tengah') {
+        ticket = 650000;
+        hotel = 400000;
+      } else if (origin === 'jawa_barat') {
+        ticket = 250000;
+        hotel = 300000;
+      } else {
+        ticket = 80000;
+        hotel = 60000;
+      }
+
+      const formatRp = (n) => 'Rp ' + n.toLocaleString('id-ID');
+
+      document.getElementById('lblTicket').innerText = formatRp(ticket);
+      document.getElementById('lblHotel').innerText = formatRp(hotel);
+
+      const totalManual = ticket + hotel;
+      const totalKoscheck = count * 35000;
+      const savings = Math.max(0, totalManual - totalKoscheck);
+
+      document.getElementById('lblManual').innerText = formatRp(totalManual);
+      document.getElementById('lblKoscheck').innerText = formatRp(totalKoscheck);
+      document.getElementById('lblSavings').innerText = formatRp(savings);
+    }
+
+    // Initial calculation
+    calcSavings();
+  </script>
+</body>
+</html>

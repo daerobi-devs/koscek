@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cari & Peta Kos Terverifikasi | KosCheck</title>
+  <meta name="description" content="Peta interaktif pencarian kos terverifikasi audit fisik 4 pilar di sekitar kampus UNPAM, UI, ITB, dan lainnya. Bebas catfishing dan penipuan DP.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Leaflet CSS & JS for Interactive Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+      letter-spacing: -0.011em;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+    /* Custom Leaflet Map Pin Styles */
+    .custom-price-pin {
+      background: #000000;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .custom-price-pin.verified {
+      background: #0f172a;
+    }
+    .custom-price-pin.active,
+    .custom-price-pin:hover {
+      background: #f59e0b;
+      color: #000000;
+      transform: scale(1.12);
+      z-index: 9999 !important;
+      border-color: #000000;
+    }
+    .leaflet-popup-content-wrapper {
+      padding: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      border: 1px solid #e2e8f0;
+    }
+    .leaflet-popup-content {
+      margin: 0;
+      line-height: 1.4;
+    }
+    /* Hide scrollbar for clean UI */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col antialiased">
+
+  <!-- TOP BAR: NAVIGATION & LIVE SEARCH -->
+  <header class="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <div class="px-4 sm:px-6 lg:px-8 py-3">
+      <div class="flex items-center justify-between gap-4">
+        
+        <!-- Left: Brand Logo & Home Link -->
+        <div class="flex items-center gap-6 shrink-0">
+          <a href="index.html" class="flex items-center gap-2.5 group">
+            <img src="koscheck-logo.png" alt="KosCheck Logo" class="h-9 w-auto object-contain">
+            <div class="flex flex-col">
+              <span class="text-xl font-black tracking-tight text-black leading-none">Kos<span class="text-amber-500">Check</span></span>
+              <span class="text-[8px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Peta & Pencarian Kampus</span>
+            </div>
+          </a>
+          <a href="index.html" class="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black py-1 px-2.5 rounded hover:bg-gray-100 transition-colors">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            Kembali ke Beranda
+          </a>
+        </div>
+
+        <!-- Center: Interactive Autocomplete Search Box (Mamikos Style) -->
+        <div class="relative flex-1 max-w-2xl">
+          <div class="relative flex items-center">
+            <div class="absolute left-3.5 text-gray-400 pointer-events-none">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <input 
+              id="liveSearchInput"
+              type="text" 
+              autocomplete="off"
+              placeholder="Ketik nama kampus, area, atau jalan (contoh: UNPAM Viktor, Margonda, UI, ITB...)"
+              class="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white text-xs sm:text-sm text-black placeholder-gray-500 rounded-full py-2.5 pl-10 pr-20 border border-transparent focus:border-black focus:outline-none transition-all shadow-sm"
+            >
+            <button 
+              id="clearSearchBtn" 
+              class="absolute right-10 text-gray-400 hover:text-black hidden p-1"
+              title="Hapus pencarian"
+            >
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+            <div class="absolute right-2.5 text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full hidden sm:block">
+              LIVE
+            </div>
+          </div>
+
+          <!-- Predictive Autocomplete Dropdown Menu -->
+          <div 
+            id="autocompleteDropdown" 
+            class="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 hidden overflow-hidden divide-y divide-gray-100"
+          >
+            <!-- Content will be injected dynamically by JS -->
+          </div>
+        </div>
+
+        <!-- Right: Fast Actions -->
+        <div class="flex items-center gap-2 shrink-0">
+          <a 
+            href="https://wa.me/6281234567890?text=Halo%20Admin%20KosCheck,%20saya%20mau%20titip%20survei%20kos" 
+            target="_blank"
+            class="inline-flex items-center gap-1.5 bg-black hover:bg-gray-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-full transition-colors whitespace-nowrap"
+          >
+            <i data-lucide="send" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span class="hidden sm:inline">Titip Survei</span> (Rp 35k)
+          </a>
+        </div>
+
+      </div>
+
+      <!-- FILTER PILLS BAR -->
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 border-t border-gray-100 mt-2.5 text-xs">
+        <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px] shrink-0">Filter Cepat:</span>
+        
+        <!-- Campus Filter Dropdown -->
+        <select id="filterCampus" class="bg-gray-100 hover:bg-gray-200 text-black font-semibold rounded-full px-3 py-1.5 border-none focus:ring-1 focus:ring-black outline-none shrink-0 cursor-pointer">
+          <option value="all">Semua Kampus</option>
+          <option value="unpam-viktor" selected>UNPAM - Kampus Viktor</option>
+          <option value="unpam-pusat">UNPAM - Kampus Pusat</option>
+          <option value="ui-depok">Universitas Indonesia (UI)</option>
+          <option value="itb-bandung">ITB Bandung</option>
+        </select>
+
+        <!-- Room Type Filter -->
+        <button data-type="all" class="filter-type-btn active bg-black text-white font-bold rounded-full px-3.5 py-1.5 shrink-0 transition-colors">
+          Semua Tipe
+        </button>
+        <button data-type="putri" class="filter-type-btn bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-full px-3.5 py-1.5 shrink-0 transition-colors">
+          Khusus Putri
+        </button>
+        <button data-type="putra" class="filter-type-btn bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-full px-3.5 py-1.5 shrink-0 transition-colors">
+          Khusus Putra
+        </button>
+        <button data-type="campur" class="filter-type-btn bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-full px-3.5 py-1.5 shrink-0 transition-colors">
+          Campur
+        </button>
+
+        <!-- Audit Status Toggle -->
+        <label class="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 rounded-full px-3 py-1.5 shrink-0 cursor-pointer select-none">
+          <input type="checkbox" id="filterVerifiedOnly" class="rounded text-black focus:ring-0 w-3.5 h-3.5">
+          <span class="font-bold text-gray-900 text-xs flex items-center gap-1">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i> Hanya Lolos Audit 4 Pilar
+          </span>
+        </label>
+
+        <!-- Reset Button -->
+        <button id="resetFilterBtn" class="text-gray-500 hover:text-black font-semibold text-xs ml-auto shrink-0 underline decoration-gray-300">
+          Reset Filter
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN SPLIT SCREEN: LISTINGS (LEFT) + MAP (RIGHT) -->
+  <main class="flex-1 flex flex-col md:flex-row h-[calc(100vh-7rem)] overflow-hidden relative">
+
+    <!-- LEFT PANE: KOS LISTINGS -->
+    <section id="listPane" class="w-full md:w-[52%] lg:w-[48%] h-full overflow-y-auto p-4 sm:p-6 bg-white border-r border-gray-200">
+      
+      <!-- Status & Stats Bar -->
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+        <div>
+          <h1 id="resultHeading" class="text-base sm:text-lg font-black text-black tracking-tight">
+            Menampilkan Kos di Sekitar UNPAM Viktor
+          </h1>
+          <p id="resultCount" class="text-xs text-gray-500 mt-0.5">
+            Ditemukan 8 properti • Klik kartu untuk melihat titik di peta
+          </p>
+        </div>
+        <div class="text-right">
+          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+            <i data-lucide="info" class="w-3 h-3"></i> Belum ada audit? Titip Rp 35k
+          </span>
+        </div>
+      </div>
+
+      <!-- Kos Listings Grid / Vertical Cards -->
+      <div id="kosContainer" class="space-y-4">
+        <!-- Rendered by JavaScript dynamically -->
+      </div>
+
+      <!-- Bottom Disclaimer -->
+      <div class="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-600">
+        <div class="flex items-start gap-2.5">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-black shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold text-black">Peringatan Keamanan Mahasiswa:</span>
+            Jangan pernah mentransfer DP sebelum ada bukti video survei fisik 60fps tanpa manipulasi dan verifikasi KTP pemilik asli dari tim auditor KosCheck.
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANE: INTERACTIVE LEAFLET MAP -->
+    <section id="mapPane" class="w-full md:w-[48%] lg:w-[52%] h-full relative bg-gray-100">
+      
+      <!-- Leaflet Map Container -->
+      <div id="map" class="w-full h-full z-10"></div>
+
+      <!-- Floating Map Helper Overlay -->
+      <div class="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-lg shadow-lg border border-gray-200 text-xs">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+          <span class="font-bold text-black" id="mapCenterLabel">Pusat Peta: UNPAM Kampus Viktor</span>
+        </div>
+      </div>
+
+      <!-- Recenter Button -->
+      <button 
+        id="recenterBtn" 
+        class="absolute bottom-6 right-6 z-20 bg-white hover:bg-gray-100 text-black p-3 rounded-full shadow-xl border border-gray-200 transition-all active:scale-95 flex items-center gap-2 text-xs font-bold"
+        title="Fokus ke Kampus Terpilih"
+      >
+        <i data-lucide="crosshair" class="w-4 h-4"></i>
+        <span>Fokus Kampus</span>
+      </button>
+
+    </section>
+
+  </main>
+
+  <!-- MOBILE VIEW TOGGLE BUTTON (Airbnb / Mamikos Mobile Style) -->
+  <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+    <button 
+      id="mobileViewToggle" 
+      class="bg-black text-white font-extrabold text-xs uppercase tracking-wider px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 border border-gray-700"
+    >
+      <i data-lucide="map" class="w-4 h-4 text-amber-400"></i>
+      <span id="mobileToggleText">Lihat di Peta</span>
+    </button>
+  </div>
+
+  <!-- MODAL: ORDER SURVEI SPESIFIK KOS -->
+  <div id="orderModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 relative animate-in fade-in zoom-in duration-150">
+      <button onclick="closeOrderModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      
+      <div class="flex items-center gap-2.5 mb-3">
+        <div class="p-2 bg-amber-100 text-amber-800 rounded-lg">
+          <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="font-black text-lg text-black">Formulir Titip Survei Fisik</h3>
+          <p class="text-xs text-gray-500">Tarif flat Rp 35.000 / satu lokasi kos</p>
+        </div>
+      </div>
+
+      <div class="space-y-3.5 my-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Target Kos yang Mau Disurvei</label>
+          <input id="modalKosName" type="text" readonly class="w-full bg-gray-100 font-bold text-sm text-black px-3.5 py-2.5 rounded-lg border border-gray-300">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Alamat / Link Iklan (Mamikos / OLX / IG)</label>
+          <input id="modalKosAddress" type="text" placeholder="Masukkan link iklan atau patokan alamat kos" class="w-full bg-white text-xs text-black px-3.5 py-2.5 rounded-lg border border-gray-300 focus:border-black focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nama Pemesan</label>
+            <input id="modalUserName" type="text" placeholder="Nama kamu" class="w-full bg-white text-xs text-black px-3.5 py-2.5 rounded-lg border border-gray-300 focus:border-black focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nomor WhatsApp</label>
+            <input id="modalUserWA" type="tel" placeholder="08xxxxxxxxxx" class="w-full bg-white text-xs text-black px-3.5 py-2.5 rounded-lg border border-gray-300 focus:border-black focus:outline-none">
+          </div>
+        </div>
+
+        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-600">
+          <div class="font-bold text-black mb-1">Audit Fisik 4 Pilar Meliputi:</div>
+          <ul class="list-disc list-inside space-y-0.5 text-[11px]">
+            <li>Uji endapan air bersih & debit keran 10 menit</li>
+            <li>Speedtest 4G 4 operator di dalam kamar tertutup</li>
+            <li>Video 60fps tanpa manipulasi wide-angle</li>
+            <li>Cek KTP pemilik sah & validasi bebas sengketa</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+        <button onclick="closeOrderModal()" class="px-4 py-2 text-xs font-bold text-gray-600 hover:text-black">
+          Batal
+        </button>
+        <button id="modalSubmitWA" class="inline-flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-extrabold text-xs px-5 py-2.5 rounded-lg transition-colors">
+          <i data-lucide="send" class="w-4 h-4 text-amber-400"></i>
+          Kirim Order via WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT: DATASET, LEAFLET MAP, AND SEARCH LOGIC -->
+  <script>
+    // 1. DATASET KOS & KAMPUS REALISTIS
+    const CAMPUS_CONFIG = {
+      'unpam-viktor': {
+        name: 'UNPAM - Kampus Viktor',
+        lat: -6.3468,
+        lng: 106.6914,
+        zoom: 15,
+        area: 'Pamulang Barat / Buaran Serpong'
+      },
+      'unpam-pusat': {
+        name: 'UNPAM - Kampus Pusat',
+        lat: -6.3444,
+        lng: 106.7383,
+        zoom: 15,
+        area: 'Jl. Surya Kencana Pamulang'
+      },
+      'ui-depok': {
+        name: 'Universitas Indonesia (UI Depok)',
+        lat: -6.3627,
+        lng: 106.8271,
+        zoom: 15,
+        area: 'Margonda / Kukusan Beji'
+      },
+      'itb-bandung': {
+        name: 'Institut Teknologi Bandung (ITB)',
+        lat: -6.8915,
+        lng: 107.6107,
+        zoom: 15,
+        area: 'Coblong / Dago / Dipatiukur'
+      }
+    };
+
+    const KOS_DATABASE = [
+      // KELOMPOK UNPAM VIKTOR
+      {
+        id: 'kos-1',
+        campus: 'unpam-viktor',
+        name: 'Kost Gracia Eksklusif Viktor',
+        type: 'putri',
+        priceMonthly: 850000,
+        address: 'Jl. Raya Viktor No. 18, Buaran, Serpong',
+        distance: '350 meter dari Kampus Viktor UNPAM',
+        lat: -6.3455,
+        lng: 106.6925,
+        verified: true,
+        auditScore: 92,
+        metrics: {
+          water: 'Jernih (Bebas Bau Besi)',
+          speed: '4G Telkomsel 44 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'KTP & Rekening Terverifikasi'
+        },
+        image: 'hero-room.jpg'
+      },
+      {
+        id: 'kos-2',
+        campus: 'unpam-viktor',
+        name: 'Kost D\'Green Residence Pamulang',
+        type: 'putra',
+        priceMonthly: 750000,
+        address: 'Gang Salak III, Buaran, Pamulang Barat',
+        distance: '500 meter dari Kampus Viktor UNPAM',
+        lat: -6.3482,
+        lng: 106.6901,
+        verified: true,
+        auditScore: 88,
+        metrics: {
+          water: 'Bersih (Filterisasi Mandiri)',
+          speed: '4G XL 36 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'Ibu Kos Tinggal di Depan'
+        },
+        image: 'hero-room.jpg'
+      },
+      {
+        id: 'kos-3',
+        campus: 'unpam-viktor',
+        name: 'Kost Puri Kenanga Mandiri',
+        type: 'campur',
+        priceMonthly: 600000,
+        address: 'Jl. Puspitek Raya No. 42, Pamulang',
+        distance: '750 meter dari Kampus Viktor UNPAM',
+        lat: -6.3495,
+        lng: 106.6940,
+        verified: false,
+        auditScore: null,
+        metrics: {
+          water: 'Belum diuji fisik',
+          speed: 'Belum speedtest',
+          video: 'Belum ada rekaman',
+          scamSafe: 'Perlu survei sebelum DP'
+        },
+        image: 'hero-room.jpg'
+      },
+      {
+        id: 'kos-4',
+        campus: 'unpam-viktor',
+        name: 'Kost Melati Indah Putri UNPAM',
+        type: 'putri',
+        priceMonthly: 900000,
+        address: 'Jl. Permata No. 7, Buaran Serpong',
+        distance: '400 meter dari Kampus Viktor UNPAM',
+        lat: -6.3440,
+        lng: 106.6890,
+        verified: true,
+        auditScore: 94,
+        metrics: {
+          water: 'Sumur Bor Dalam (Sangat Jernih)',
+          speed: '4G Indosat 52 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'Legalitas Sertifikat Klir'
+        },
+        image: 'hero-room.jpg'
+      },
+
+      // KELOMPOK UNPAM PUSAT
+      {
+        id: 'kos-5',
+        campus: 'unpam-pusat',
+        name: 'Kost Mahasiswa Surya Kencana',
+        type: 'putra',
+        priceMonthly: 700000,
+        address: 'Jl. Surya Kencana No. 55, Pamulang Barat',
+        distance: '200 meter dari Gerbang Utama UNPAM Pusat',
+        lat: -6.3435,
+        lng: 106.7375,
+        verified: true,
+        auditScore: 89,
+        metrics: {
+          water: 'Air Pam Jernih',
+          speed: '4G Telkomsel 38 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'KTP Pengelola Cocok'
+        },
+        image: 'hero-room.jpg'
+      },
+      {
+        id: 'kos-6',
+        campus: 'unpam-pusat',
+        name: 'Kost Putri Al-Barokah Surya',
+        type: 'putri',
+        priceMonthly: 800000,
+        address: 'Gang H. Rean, Pamulang Barat',
+        distance: '350 meter dari UNPAM Pusat',
+        lat: -6.3458,
+        lng: 106.7395,
+        verified: true,
+        auditScore: 91,
+        metrics: {
+          water: 'Sumur Bor Jernih',
+          speed: '4G Smartfren 28 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'Aman Bebas Jam Malam Ketat'
+        },
+        image: 'hero-room.jpg'
+      },
+      {
+        id: 'kos-7',
+        campus: 'unpam-pusat',
+        name: 'Kost Pondok Bambu Siliwangi',
+        type: 'campur',
+        priceMonthly: 650000,
+        address: 'Jl. Siliwangi Raya No. 12, Pamulang',
+        distance: '600 meter dari UNPAM Pusat',
+        lat: -6.3420,
+        lng: 106.7360,
+        verified: false,
+        auditScore: null,
+        metrics: {
+          water: 'Belum diuji fisik',
+          speed: 'Belum speedtest',
+          video: 'Belum ada rekaman',
+          scamSafe: 'Belum diverifikasi auditor'
+        },
+        image: 'hero-room.jpg'
+      },
+
+      // KELOMPOK UI DEPOK
+      {
+        id: 'kos-8',
+        campus: 'ui-depok',
+        name: 'Kost Pondok Rinjani UI Kukusan',
+        type: 'putri',
+        priceMonthly: 1200000,
+        address: 'Jl. Juragan Sinda No. 14, Kukusan, Beji, Depok',
+        distance: '450 meter dari Pintu Masuk Kukusan Teknik UI',
+        lat: -6.3645,
+        lng: 106.8220,
+        verified: true,
+        auditScore: 95,
+        metrics: {
+          water: 'Air PDAM Jernih & Deras',
+          speed: '4G Telkomsel 58 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'Verifikasi Pemilik 100% Sah'
+        },
+        image: 'hero-room.jpg'
+      },
+      {
+        id: 'kos-9',
+        campus: 'ui-depok',
+        name: 'Kost Margonda Tower Residence',
+        type: 'campur',
+        priceMonthly: 1400000,
+        address: 'Jl. Margonda Raya No. 288, Pondok Cina',
+        distance: '500 meter dari Stasiun Pondok Cina / UI',
+        lat: -6.3680,
+        lng: 106.8320,
+        verified: true,
+        auditScore: 90,
+        metrics: {
+          water: 'Water Treatment Gedung',
+          speed: '4G XL 42 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'Manajemen Resepsionis'
+        },
+        image: 'hero-room.jpg'
+      },
+
+      // KELOMPOK ITB BANDUNG
+      {
+        id: 'kos-10',
+        campus: 'itb-bandung',
+        name: 'Kost Cisitu Indah Dago Mahasiswa',
+        type: 'putra',
+        priceMonthly: 1100000,
+        address: 'Jl. Cisitu Indah VI No. 8, Dago, Bandung',
+        distance: '650 meter dari Gerbang Belakang ITB Sasana Budaya',
+        lat: -6.8850,
+        lng: 107.6120,
+        verified: true,
+        auditScore: 93,
+        metrics: {
+          water: 'Air Pegunungan Bersih & Dingin',
+          speed: '4G Telkomsel 50 Mbps',
+          video: 'Tersedia (Full 60fps)',
+          scamSafe: 'Ibu Kos Alumni ITB'
+        },
+        image: 'hero-room.jpg'
+      }
+    ];
+
+    // 2. STATE & LEAFLET MAP INITIALIZATION
+    let currentCampus = 'unpam-viktor';
+    let currentTypeFilter = 'all';
+    let verifiedOnly = false;
+    let map = null;
+    let markersLayer = null;
+    let activeMarkerId = null;
+
+    function initMap() {
+      const initialConfig = CAMPUS_CONFIG[currentCampus];
+      
+      // Initialize Leaflet Map
+      map = L.map('map', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([initialConfig.lat, initialConfig.lng], initialConfig.zoom);
+
+      // Clean Light Map Tiles (CartoDB Positron - Monochrome & Minimalist)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(map);
+
+      // Add Campus Center Anchor Marker
+      markersLayer = L.layerGroup().addTo(map);
+
+      updateMapAndListings();
+    }
+
+    // 3. RENDER KOS MARKERS ON LEAFLET MAP
+    function renderMapMarkers(filteredKos) {
+      if (!map || !markersLayer) return;
+      markersLayer.clearLayers();
+
+      // Add Campus Circle Marker
+      const campusConfig = CAMPUS_CONFIG[currentCampus];
+      const campusIcon = L.divIcon({
+        className: 'campus-pin',
+        html: `<div style="background:#f59e0b; color:#000000; font-weight:800; font-size:10px; padding:3px 7px; border-radius:4px; border:2px solid #000; box-shadow:0 2px 8px rgba(0,0,0,0.2); white-space:nowrap;">KAMPUS ${campusConfig.name.split('-')[0].trim()}</div>`,
+        iconSize: [80, 24],
+        iconAnchor: [40, 12]
+      });
+      L.marker([campusConfig.lat, campusConfig.lng], { icon: campusIcon }).addTo(markersLayer)
+        .bindPopup(`<b>${campusConfig.name}</b><br><span style="font-size:11px; color:#666;">Titik Acuan Utama Survei</span>`);
+
+      // Add each Kos Pin
+      filteredKos.forEach(kos => {
+        const formattedPrice = `Rp ${(kos.priceMonthly / 1000).toLocaleString('id-ID')}k`;
+        const verifiedBadge = kos.verified ? '<span style="color:#38bdf8;">&#10003;</span>' : '';
+
+        const customIcon = L.divIcon({
+          className: `custom-price-pin ${kos.verified ? 'verified' : ''} ${activeMarkerId === kos.id ? 'active' : ''}`,
+          html: `<span>${kos.name.split(' ')[1] || 'Kos'}: ${formattedPrice}</span> ${verifiedBadge}`,
+          iconSize: [110, 26],
+          iconAnchor: [55, 13]
+        });
+
+        const marker = L.marker([kos.lat, kos.lng], { icon: customIcon });
+
+        // Popup Content
+        const popupContent = `
+          <div style="width: 220px; font-family: 'Inter', -apple-system, sans-serif;">
+            <img src="${kos.image}" alt="${kos.name}" style="width: 100%; height: 90px; object-fit: cover;">
+            <div style="padding: 10px;">
+              <div style="font-size: 10px; font-weight: 800; color: ${kos.verified ? '#15803d' : '#b45309'}; text-transform: uppercase;">
+                ${kos.verified ? 'Lolos Audit 4 Pilar (' + kos.auditScore + '/100)' : 'Perlu Survei Fisik'}
+              </div>
+              <div style="font-weight: 800; font-size: 13px; color: #000; margin-top: 2px;">
+                ${kos.name}
+              </div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                ${kos.distance}
+              </div>
+              <div style="margin-top: 8px; font-weight: 800; font-size: 14px; color: #000;">
+                Rp ${kos.priceMonthly.toLocaleString('id-ID')}<span style="font-size: 10px; font-weight: normal; color: #64748b;"> / bln</span>
+              </div>
+              <button onclick="openOrderModal('${kos.id}')" style="margin-top: 8px; width: 100%; background: #000; color: #fff; font-size: 10px; font-weight: 800; padding: 6px; border: none; border-radius: 4px; cursor: pointer;">
+                ${kos.verified ? 'Pesan Survei Ulang (Rp 35k)' : 'Titip Survei Kos Ini (Rp 35k)'}
+              </button>
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        
+        marker.on('click', () => {
+          highlightKosCard(kos.id);
+        });
+
+        markersLayer.addLayer(marker);
+      });
+    }
+
+    // 4. RENDER LISTINGS CARDS ON LEFT PANE
+    function renderListings(filteredKos) {
+      const container = document.getElementById('kosContainer');
+      const countEl = document.getElementById('resultCount');
+      const headingEl = document.getElementById('resultHeading');
+      const campusConfig = CAMPUS_CONFIG[currentCampus];
+
+      headingEl.textContent = `Kos Terverifikasi di Sekitar ${campusConfig.name}`;
+      countEl.textContent = `Ditemukan ${filteredKos.length} properti terdaftar • Klik kartu untuk menyorot titik di peta`;
+
+      if (filteredKos.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center border-2 border-dashed border-gray-200 rounded-xl my-6">
+            <i data-lucide="map-pin-off" class="w-10 h-10 text-gray-400 mx-auto mb-2"></i>
+            <h3 class="font-bold text-sm text-black">Tidak Ada Kos yang Cocok dengan Filter</h3>
+            <p class="text-xs text-gray-500 max-w-sm mx-auto mt-1">
+              Coba reset filter atau kamu bisa gunakan layanan titip survei mandiri (Rp 35.000) untuk kos apapun pilihanmu.
+            </p>
+            <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-black text-white text-xs font-bold rounded-full">
+              Reset Semua Filter
+            </button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = filteredKos.map(kos => `
+        <article 
+          id="card-${kos.id}" 
+          class="kos-card group bg-white border border-gray-200 hover:border-black rounded-xl p-4 transition-all duration-150 hover:shadow-md cursor-pointer flex flex-col sm:flex-row gap-4"
+          onclick="focusOnMap('${kos.id}', ${kos.lat}, ${kos.lng})"
+        >
+          <!-- Thumbnail Image -->
+          <div class="sm:w-44 h-32 relative rounded-lg overflow-hidden bg-gray-100 shrink-0">
+            <img src="${kos.image}" alt="${kos.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            
+            <div class="absolute top-2 left-2">
+              <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${
+                kos.type === 'putri' ? 'bg-pink-100 text-pink-700' :
+                kos.type === 'putra' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+              }">
+                ${kos.type}
+              </span>
+            </div>
+
+            ${kos.verified ? `
+              <div class="absolute bottom-2 left-2 right-2 bg-black/85 backdrop-blur-sm text-white px-2 py-1 rounded text-[10px] flex items-center justify-between font-bold">
+                <span>SKOR AUDIT</span>
+                <span class="text-amber-400">${kos.auditScore}/100</span>
+              </div>
+            ` : `
+              <div class="absolute bottom-2 left-2 right-2 bg-amber-600/90 text-white px-2 py-1 rounded text-[9px] text-center font-bold">
+                BELUM DI-SURVEI FISIK
+              </div>
+            `}
+          </div>
+
+          <!-- Content Details -->
+          <div class="flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <h2 class="font-extrabold text-sm sm:text-base text-black group-hover:text-amber-600 transition-colors">
+                  ${kos.name}
+                </h2>
+                <div class="text-right shrink-0">
+                  <div class="text-base sm:text-lg font-black text-black">
+                    Rp ${kos.priceMonthly.toLocaleString('id-ID')}
+                  </div>
+                  <div class="text-[10px] text-gray-500 font-medium">/ bulan</div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-gray-400 shrink-0"></i>
+                <span class="truncate">${kos.distance}</span>
+              </div>
+
+              <!-- 4 Pilar Metrics Pill -->
+              <div class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-gray-100 text-[11px] font-medium text-gray-700">
+                <div class="flex items-center gap-1 truncate" title="Uji Air: ${kos.metrics.water}">
+                  <i data-lucide="droplet" class="w-3 h-3 text-blue-500 shrink-0"></i>
+                  <span class="truncate">${kos.metrics.water}</span>
+                </div>
+                <div class="flex items-center gap-1 truncate" title="Speedtest 4G: ${kos.metrics.speed}">
+                  <i data-lucide="signal" class="w-3 h-3 text-emerald-500 shrink-0"></i>
+                  <span class="truncate">${kos.metrics.speed}</span>
+                </div>
+                <div class="flex items-center gap-1 truncate" title="Video 60fps: ${kos.metrics.video}">
+                  <i data-lucide="video" class="w-3 h-3 text-amber-500 shrink-0"></i>
+                  <span class="truncate">${kos.metrics.video}</span>
+                </div>
+                <div class="flex items-center gap-1 truncate" title="Keamanan: ${kos.metrics.scamSafe}">
+                  <i data-lucide="shield-check" class="w-3 h-3 text-purple-500 shrink-0"></i>
+                  <span class="truncate">${kos.metrics.scamSafe}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="flex items-center justify-between gap-2 mt-4 pt-2 border-t border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                ${kos.address}
+              </span>
+              <button 
+                onclick="event.stopPropagation(); openOrderModal('${kos.id}')" 
+                class="inline-flex items-center gap-1 bg-black hover:bg-gray-800 text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded transition-colors"
+              >
+                <i data-lucide="send" class="w-3 h-3 text-amber-400"></i>
+                ${kos.verified ? 'Survei Ulang (Rp 35k)' : 'Titip Survei (Rp 35k)'}
+              </button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // 5. UPDATE MAP & LISTINGS FILTER
+    function updateMapAndListings() {
+      let filtered = KOS_DATABASE.filter(k => k.campus === currentCampus);
+
+      if (currentTypeFilter !== 'all') {
+        filtered = filtered.filter(k => k.type === currentTypeFilter);
+      }
+
+      if (verifiedOnly) {
+        filtered = filtered.filter(k => k.verified === true);
+      }
+
+      renderListings(filtered);
+      renderMapMarkers(filtered);
+
+      const campusConfig = CAMPUS_CONFIG[currentCampus];
+      if (map) {
+        map.setView([campusConfig.lat, campusConfig.lng], campusConfig.zoom);
+        document.getElementById('mapCenterLabel').textContent = `Pusat Peta: ${campusConfig.name}`;
+      }
+    }
+
+    // 6. CARD INTERACTION & MAP FOCUS
+    function focusOnMap(kosId, lat, lng) {
+      activeMarkerId = kosId;
+      if (map) {
+        map.flyTo([lat, lng], 17, { duration: 0.8 });
+      }
+
+      // Highlight Card visually
+      document.querySelectorAll('.kos-card').forEach(c => c.classList.remove('ring-2', 'ring-black', 'bg-gray-50'));
+      const activeCard = document.getElementById(`card-${kosId}`);
+      if (activeCard) {
+        activeCard.classList.add('ring-2', 'ring-black', 'bg-gray-50');
+      }
+
+      // Refresh Marker Styles
+      const filtered = KOS_DATABASE.filter(k => k.campus === currentCampus);
+      renderMapMarkers(filtered);
+    }
+
+    function highlightKosCard(kosId) {
+      activeMarkerId = kosId;
+      document.querySelectorAll('.kos-card').forEach(c => c.classList.remove('ring-2', 'ring-black', 'bg-gray-50'));
+      const card = document.getElementById(`card-${kosId}`);
+      if (card) {
+        card.classList.add('ring-2', 'ring-black', 'bg-gray-50');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    // 7. PREDICTIVE AUTOCOMPLETE SEARCH LOGIC (Mamikos Style with Debounce)
+    const SEARCH_SUGGESTIONS = [
+      { type: 'campus', key: 'unpam-viktor', title: 'UNPAM - Kampus Viktor', subtitle: 'Pamulang Barat / Serpong, Tangsel' },
+      { type: 'campus', key: 'unpam-pusat', title: 'UNPAM - Kampus Pusat', subtitle: 'Jl. Surya Kencana Pamulang, Tangsel' },
+      { type: 'campus', key: 'ui-depok', title: 'Universitas Indonesia (UI Depok)', subtitle: 'Margonda / Beji / Kukusan' },
+      { type: 'campus', key: 'itb-bandung', title: 'Institut Teknologi Bandung (ITB)', subtitle: 'Dago / Coblong / Dipatiukur' },
+      { type: 'area', key: 'unpam-viktor', title: 'Pamulang Barat (Dekat Kampus Viktor)', subtitle: 'Radius 1-2 km dari UNPAM' },
+      { type: 'area', key: 'unpam-pusat', title: 'Jl. Siliwangi & Surya Kencana', subtitle: 'Area kos ramai UNPAM Pusat' },
+      { type: 'area', key: 'ui-depok', title: 'Margonda Raya & Kukusan Kelurahan', subtitle: 'Kawasan kos mahasiswa UI Depok' },
+      { type: 'area', key: 'itb-bandung', title: 'Cisitu & Sekeloa Dago', subtitle: 'Kawasan favorit mahasiswa ITB' }
+    ];
+
+    function debounce(func, delay = 200) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => func(...args), delay);
+      };
+    }
+
+    const searchInput = document.getElementById('liveSearchInput');
+    const dropdown = document.getElementById('autocompleteDropdown');
+    const clearBtn = document.getElementById('clearSearchBtn');
+
+    searchInput.addEventListener('input', debounce((e) => {
+      const q = e.target.value.trim().toLowerCase();
+      
+      if (q.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+        dropdown.classList.add('hidden');
+        return;
+      }
+
+      // Filter suggestions and kos database
+      const matchedSuggestions = SEARCH_SUGGESTIONS.filter(item => 
+        item.title.toLowerCase().includes(q) || item.subtitle.toLowerCase().includes(q)
+      );
+
+      const matchedKos = KOS_DATABASE.filter(item => 
+        item.name.toLowerCase().includes(q) || item.address.toLowerCase().includes(q)
+      );
+
+      if (matchedSuggestions.length === 0 && matchedKos.length === 0) {
+        dropdown.innerHTML = `
+          <div class="p-4 text-center text-xs text-gray-500">
+            Tidak ditemukan hasil untuk "<strong>${q}</strong>".<br>
+            <span class="text-[10px] text-gray-400">Pilih salah satu kampus di filter atas atau titip survei manual.</span>
+          </div>
+        `;
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      let html = '';
+
+      if (matchedSuggestions.length > 0) {
+        html += `<div class="p-2 bg-gray-50 text-[10px] font-black uppercase text-gray-400 tracking-wider">KAMPUS & WILAYAH POPULER</div>`;
+        matchedSuggestions.forEach(item => {
+          html += `
+            <div 
+              onclick="selectCampusFromSearch('${item.key}', '${item.title}')" 
+              class="p-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between text-xs transition-colors"
+            >
+              <div class="flex items-center gap-2.5">
+                <i data-lucide="map-pin" class="w-4 h-4 text-black"></i>
+                <div>
+                  <div class="font-bold text-black">${item.title}</div>
+                  <div class="text-[11px] text-gray-500">${item.subtitle}</div>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded">PILIH</span>
+            </div>
+          `;
+        });
+      }
+
+      if (matchedKos.length > 0) {
+        html += `<div class="p-2 bg-gray-50 text-[10px] font-black uppercase text-gray-400 tracking-wider">NAMA PROPERTI KOS</div>`;
+        matchedKos.slice(0, 3).forEach(kos => {
+          html += `
+            <div 
+              onclick="selectKosFromSearch('${kos.campus}', '${kos.id}', ${kos.lat}, ${kos.lng})" 
+              class="p-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between text-xs transition-colors"
+            >
+              <div class="flex items-center gap-2.5">
+                <i data-lucide="home" class="w-4 h-4 text-amber-500"></i>
+                <div>
+                  <div class="font-bold text-black">${kos.name}</div>
+                  <div class="text-[11px] text-gray-500">${kos.distance} • Rp ${(kos.priceMonthly/1000).toLocaleString('id-ID')}k</div>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold text-black border border-gray-300 px-2 py-0.5 rounded">LIHAT</span>
+            </div>
+          `;
+        });
+      }
+
+      dropdown.innerHTML = html;
+      dropdown.classList.remove('hidden');
+      lucide.createIcons();
+    }, 200));
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      dropdown.classList.add('hidden');
+      searchInput.focus();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    function selectCampusFromSearch(campusKey, campusTitle) {
+      currentCampus = campusKey;
+      document.getElementById('filterCampus').value = campusKey;
+      searchInput.value = campusTitle;
+      dropdown.classList.add('hidden');
+      updateMapAndListings();
+    }
+
+    function selectKosFromSearch(campusKey, kosId, lat, lng) {
+      currentCampus = campusKey;
+      document.getElementById('filterCampus').value = campusKey;
+      dropdown.classList.add('hidden');
+      updateMapAndListings();
+      setTimeout(() => {
+        focusOnMap(kosId, lat, lng);
+      }, 300);
+    }
+
+    // 8. FILTERS EVENT LISTENERS
+    document.getElementById('filterCampus').addEventListener('change', (e) => {
+      currentCampus = e.target.value;
+      updateMapAndListings();
+    });
+
+    document.querySelectorAll('.filter-type-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-type-btn').forEach(b => {
+          b.classList.remove('active', 'bg-black', 'text-white');
+          b.classList.add('bg-gray-100', 'text-gray-800');
+        });
+        btn.classList.add('active', 'bg-black', 'text-white');
+        btn.classList.remove('bg-gray-100', 'text-gray-800');
+        currentTypeFilter = btn.dataset.type;
+        updateMapAndListings();
+      });
+    });
+
+    document.getElementById('filterVerifiedOnly').addEventListener('change', (e) => {
+      verifiedOnly = e.target.checked;
+      updateMapAndListings();
+    });
+
+    document.getElementById('resetFilterBtn').addEventListener('click', resetFilters);
+
+    function resetFilters() {
+      currentCampus = 'unpam-viktor';
+      currentTypeFilter = 'all';
+      verifiedOnly = false;
+      document.getElementById('filterCampus').value = 'unpam-viktor';
+      document.getElementById('filterVerifiedOnly').checked = false;
+      document.querySelectorAll('.filter-type-btn').forEach(b => {
+        if (b.dataset.type === 'all') {
+          b.classList.add('active', 'bg-black', 'text-white');
+          b.classList.remove('bg-gray-100', 'text-gray-800');
+        } else {
+          b.classList.remove('active', 'bg-black', 'text-white');
+          b.classList.add('bg-gray-100', 'text-gray-800');
+        }
+      });
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      updateMapAndListings();
+    }
+
+    document.getElementById('recenterBtn').addEventListener('click', () => {
+      const campusConfig = CAMPUS_CONFIG[currentCampus];
+      if (map) {
+        map.flyTo([campusConfig.lat, campusConfig.lng], campusConfig.zoom, { duration: 0.8 });
+      }
+    });
+
+    // 9. MOBILE VIEW TOGGLER (LIST vs MAP)
+    const mobileToggle = document.getElementById('mobileViewToggle');
+    const mobileText = document.getElementById('mobileToggleText');
+    const listPane = document.getElementById('listPane');
+    const mapPane = document.getElementById('mapPane');
+    let isMapVisibleOnMobile = false;
+
+    mobileToggle.addEventListener('click', () => {
+      isMapVisibleOnMobile = !isMapVisibleOnMobile;
+      if (isMapVisibleOnMobile) {
+        listPane.classList.add('hidden');
+        mapPane.classList.remove('hidden');
+        mapPane.classList.add('block');
+        mobileText.textContent = 'Lihat Daftar Kos';
+        if (map) map.invalidateSize();
+      } else {
+        listPane.classList.remove('hidden');
+        mapPane.classList.add('hidden');
+        mapPane.classList.remove('block');
+        mobileText.textContent = 'Lihat di Peta';
+      }
+    });
+
+    // 10. MODAL ORDER TITIP SURVEI
+    let selectedOrderKos = null;
+
+    function openOrderModal(kosId) {
+      selectedOrderKos = KOS_DATABASE.find(k => k.id === kosId);
+      if (!selectedOrderKos) return;
+
+      document.getElementById('modalKosName').value = selectedOrderKos.name;
+      document.getElementById('modalKosAddress').value = selectedOrderKos.address;
+      document.getElementById('orderModal').classList.remove('hidden');
+    }
+
+    function closeOrderModal() {
+      document.getElementById('orderModal').classList.add('hidden');
+    }
+
+    document.getElementById('modalSubmitWA').addEventListener('click', () => {
+      const kosName = document.getElementById('modalKosName').value;
+      const kosAddr = document.getElementById('modalKosAddress').value;
+      const userName = document.getElementById('modalUserName').value.trim() || 'Calon Penghuni';
+      const userWA = document.getElementById('modalUserWA').value.trim() || '-';
+
+      const message = `Halo Admin KosCheck, saya mau titip survei fisik 4 pilar:%0A%0A` +
+        `*Target Kos:* ${encodeURIComponent(kosName)}%0A` +
+        `*Alamat/Patokan:* ${encodeURIComponent(kosAddr)}%0A` +
+        `*Nama Pemesan:* ${encodeURIComponent(userName)}%0A` +
+        `*No. WhatsApp:* ${encodeURIComponent(userWA)}%0A` +
+        `*Paket:* Titip Survei Mandiri (Rp 35.000)%0A%0A` +
+        `Mohon info surveyor mahasiswa lokal yang ditugaskan. Terima kasih!`;
+
+      window.open(`https://wa.me/6281234567890?text=${message}`, '_blank');
+      closeOrderModal();
+    });
+
+    // 11. CHECK URL QUERY PARAMS ON PAGE LOAD (e.g. ?q=unpam or ?campus=ui-depok)
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+
+      const params = new URLSearchParams(window.location.search);
+      const queryCampus = params.get('campus');
+      const searchKeyword = params.get('q');
+
+      if (queryCampus && CAMPUS_CONFIG[queryCampus]) {
+        currentCampus = queryCampus;
+        document.getElementById('filterCampus').value = queryCampus;
+        updateMapAndListings();
+      } else if (searchKeyword) {
+        searchInput.value = searchKeyword;
+        // Trigger matching
+        const matched = SEARCH_SUGGESTIONS.find(s => s.title.toLowerCase().includes(searchKeyword.toLowerCase()));
+        if (matched) {
+          selectCampusFromSearch(matched.key, matched.title);
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
